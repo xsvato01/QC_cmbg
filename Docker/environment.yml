@@ -1,0 +1,19 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: BTK_k8s
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+  - r
+dependencies:
+  - ensembl-vep=96.0
+  - bwa=0.7.17
+  - gatk4=4.1.0.0
+  - fastqc
+  - multiqc
+  - picard
+  - samtools=1.6
+  - bcftools=1.8
+  - bedtools=2.24.0
+  - qualimap
