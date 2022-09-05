@@ -8,7 +8,7 @@
 # Docker-in-Docker documentation: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
 #
 # This template uses one generic job with conditional builds
-# for the default branch and all other (MR) branches.
+# for the default branch and all other (MR) branches
 
 docker-build:
   # Use the official docker image.
