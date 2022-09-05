@@ -8,7 +8,7 @@
 # Docker-in-Docker documentation: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
 #
 # This template uses one generic job with conditional builds
-# for the default branch and all other (MR) branches
+# for the default branch and all other (MR) branches.
 
 docker-build:
   # Use the official docker image.
@@ -17,7 +17,7 @@ docker-build:
   services:
     - docker:dind
   before_script:
-    - docker login -u "$USER_CERIT" -p "$KEY_CERIT" $CERIT
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   # Default branch leaves tag empty (= latest tag)
   # All other branches are tagged with the escaped branch name (commit ref slug)
   script:
@@ -25,7 +25,6 @@ docker-build:
       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
         tag=":$CI_PIPELINE_IID"
         echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = ':$CI_PIPELINE_IID'"
-
       else
         tag=":$CI_COMMIT_REF_SLUG"
         echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
