@@ -14,6 +14,8 @@ dependencies:
   - bcftools=1.8
   - bedtools=2.24.0
   - r-base=3.6.0
+  - qualimap
   - multiqc
   - r-data.table=1.13.6
-  - qualimap
+  - r-formattable
+  - r-htmlwidgets
