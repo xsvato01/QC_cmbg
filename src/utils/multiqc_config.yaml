@@ -1,7 +1,0 @@
-custom_data:
-    customtab:
-        section_name: 'Custom Data'
-        plot_type: 'beeswarm'
-sp:
-    customtab:
-        fn: '*.perexon_samples.txt'

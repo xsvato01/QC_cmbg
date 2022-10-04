@@ -120,7 +120,7 @@ process MULTIQC {
 	"""
 	Rscript --vanilla ${params.coverstat} ${launchDir}/coverage $run
 	Rscript --vanilla ${params.covcompare} "AteroHemo_gene_coverage.txt" ${params.seqstats}
-	multiqc -c ${params.QCconfig} . -n report.html
+	multiqc . -n report.html
 	"""
 
 }
