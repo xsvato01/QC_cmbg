@@ -19,3 +19,4 @@ dependencies:
   - r-data.table=1.13.6
   - r-formattable
   - r-htmlwidgets
+  - r-dplyr
