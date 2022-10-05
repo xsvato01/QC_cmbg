@@ -8,6 +8,7 @@ channels:
   - r
 dependencies:
   - bwa=0.7.17
+  - bedtools=2.24.0
   - minimap2
   - fastqc
   - picard
