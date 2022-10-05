@@ -20,4 +20,5 @@ dependencies:
   - r-formattable
   - r-htmlwidgets
   - r-dplyr
-  - r-stringi
+  - r-stringr=1.4.0
+  - r-stringi=1.7.6
