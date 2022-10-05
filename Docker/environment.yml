@@ -20,4 +20,4 @@ dependencies:
   - r-formattable
   - r-htmlwidgets
   - r-dplyr
-  - r-stringr
+  - r-stringi
