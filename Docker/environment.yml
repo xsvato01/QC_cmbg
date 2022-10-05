@@ -12,8 +12,8 @@ dependencies:
   - minimap2
   - fastqc
   - picard
-  - samtools=1.6
-  - r-base=3.6.0
+  - samtools
+  - r-base
   - qualimap
   - multiqc
   - r-data.table=1.13.6
