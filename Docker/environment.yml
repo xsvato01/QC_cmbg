@@ -8,14 +8,17 @@ channels:
   - r
 dependencies:
   - bwa=0.7.17
+  - bedtools=2.24.0
+  - minimap2
   - fastqc
   - picard
-  - samtools=1.6
-  - bcftools=1.8
-  - bedtools=2.24.0
-  - r-base=3.6.0
+  - samtools
+  - r-base
   - qualimap
   - multiqc
   - r-data.table=1.13.6
   - r-formattable
   - r-htmlwidgets
+  - r-dplyr
+  - r-stringr=1.4.0
+  - r-stringi=1.7.6
