@@ -5,7 +5,7 @@ launchDir = "${launchDir}/${run}"
 
 process FASTQC {
 	tag "FASTQC on $name using $task.cpus CPUs and $task.memory memory"
-	publishDir  "${launchDir}/fastQC", mode:'copy'
+	//publishDir  "${launchDir}/fastQC", mode:'copy'
 
 	input:
 	tuple val(name), path(reads)
@@ -41,26 +41,26 @@ process ALIGN_CPU {
 
 
 process ALIGN_GPU {
-  tag "GPU align on $name using $task.cpus CPUs and $task.memory memory"
-  publishDir "${launchDir}/mapped/", mode:'copy'
+	tag "GPU align on $name using $task.cpus CPUs and $task.memory memory"
+	publishDir "${launchDir}/mapped/", mode:'copy'
 	accelerator 1
 	container "cerit.io/ceitec/clara-parabricks:3.8.0-1.ampere"
 	memory 20.GB
 
-  input:
-   tuple val(name), path(reads)
+	input:
+	tuple val(name), path(reads)
 
-  output:
-   tuple val(name), path("${name}.bam")
+	output:
+	tuple val(name), path("${name}.bam")
 
-  script:
-   """
-   echo $PATH
+	script:
+	 """
+	 echo $PATH
 	 /parabricks/run_pipeline.py fq2bam --ref ${params.refgpu} \
 	 --in-fq $reads \
 	 --out-bam ${name}.bam \
 	 --tmp-dir .
-   """
+	 """
 }
 
 process SORT_INDEX {
@@ -71,35 +71,33 @@ process SORT_INDEX {
 	tuple val(name), path(bam)
 
 	output:
-  tuple val(name), path("${name}.sorted.bam")
-  tuple val(name), path("${name}.sorted.bai")
+	tuple val(name), path("${name}.sorted.bam")
+	tuple val(name), path("${name}.sorted.bai")
 
 	script:
 	"""
-  samtools sort ${name}.bam -o ${name}.sorted.bam
-  samtools index ${name}.sorted.bam ${name}.sorted.bai
+	samtools sort ${name}.bam -o ${name}.sorted.bam
+	samtools index ${name}.sorted.bam ${name}.sorted.bai
 	"""
 }
 
 process COVERAGE_STATS {
 	tag "Creating coverage stats on $name using $task.cpus CPUs and $task.memory memory"
-	publishDir "${launchDir}/coverage/", mode:'copy'
+	//publishDir "${launchDir}/coverage/", mode:'copy'
 
 	input:
 	tuple val(name), path(bam)
 
 	output:
 	path "*"
-	//path "*.{txt,interval_list,aln_metrics,flagstat,samstats}"
-
+	
 	script:
 	"""
 	bedtools coverage -abam ${params.covbed} -b $bam -d > ${name}.PBcoverage.txt
 	qualimap bamqc -bam $bam -gff ${params.covbed} -outdir ${name} -outfile ${name}.qualimap -outformat HTML
-	#mv ${name}/genome_results.txt ${name}.genome_results.txt
 	samtools flagstat $bam > ${name}.flagstat
 	samtools stats $bam > ${name}.samstats
-  picard BedToIntervalList -I ${params.covbed} -O ${name}.interval_list -SD ${params.ref}/GRCh38-p10.dict
+	picard BedToIntervalList -I ${params.covbed} -O ${name}.interval_list -SD ${params.ref}/GRCh38-p10.dict
 	picard CollectHsMetrics -I $bam -BAIT_INTERVALS ${name}.interval_list -TARGET_INTERVALS ${name}.interval_list -R ${params.ref}/GRCh38-p10.fa -O ${name}.aln_metrics
 	rm -r ?
 	"""
@@ -108,7 +106,7 @@ process COVERAGE_STATS {
 
 process MULTIQC {
 	tag "first QC on $name using $task.cpus CPUs and $task.memory memory"
-	publishDir "${launchDir}/mutliqc/", mode:'copy'
+	publishDir "${launchDir}/multiqc/", mode:'copy'
 
 	input:
 	path ("QC_results/*")
@@ -119,8 +117,9 @@ process MULTIQC {
 	script:
 	"""
 	Rscript --vanilla ${params.coverstat} ${launchDir}/coverage $run
-	Rscript --vanilla ${params.covcompare} "AteroHemo_gene_coverage.txt" ${params.seqstats}
-	multiqc -c ${params.QCconfig} . -n report.html
+	Rscript --vanilla ${params.covcompare} $run ${params.seqstats}
+	cat PerExon.html | perl  -pe 's/[^[:ascii:]]//g;' > PerExon_mqc.html
+	multiqc . -n report.html
 	"""
 
 }
@@ -135,5 +134,4 @@ workflow {
 //stats[0].collect().view()
 
   MULTIQC(stats[0].mix(fastqced).collect())
-// MULTIQC(stats[0].collect())
 }
