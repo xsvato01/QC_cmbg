@@ -16,7 +16,7 @@ exon_start = stringr::str_split(table$Exon, "_")
 
 final = table %>% arrange(Sample, Exon) %>%
   mutate(zscore_mad = round(((Coverage_median-SeqStats$median_median)/SeqStats$mad), digits = 2)) %>%
-  filter(zscore_mad < -1) %>%
+  filter(zscore_mad < -1.5) %>%
   mutate(Start = sapply(stringr::str_split(Exon, "_"), "[", 2)) %>%
   mutate(Exon = sapply(stringr::str_split(Exon, "_"), "[", 1) )%>%
   relocate(Chrom, .before = Exon) %>%

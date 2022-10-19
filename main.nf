@@ -1,5 +1,5 @@
 run = "${params.datain}".split("/")
-run = run[run.size()-2]
+run = run[run.size()-1]
 launchDir = "${launchDir}/${run}"
 
 
@@ -34,6 +34,7 @@ process ALIGN_CPU {
 	script:
 	rg = "\"@RG\\tID:${name}\\tSM:${name}\\tLB:${name}\\tPL:ILLUMINA\""
 	"""
+	#minimap2 -a ${params.refgpu} $reads > ${name}.sam
 	bwa mem -R ${rg} -t 4*${task.cpus} ${params.refindex} $reads > ${name}.sam
 	samtools view -Sb ${name}.sam -o ${name}.bam
 	"""
@@ -55,7 +56,7 @@ process ALIGN_GPU {
 
 	script:
 	 """
-	 echo $PATH
+	# echo $PATH
 	 /parabricks/run_pipeline.py fq2bam --ref ${params.refgpu} \
 	 --in-fq $reads \
 	 --out-bam ${name}.bam \
@@ -83,7 +84,7 @@ process SORT_INDEX {
 
 process COVERAGE_STATS {
 	tag "Creating coverage stats on $name using $task.cpus CPUs and $task.memory memory"
-	//publishDir "${launchDir}/coverage/", mode:'copy'
+	publishDir "${launchDir}/coverage/", mode:'copy', pattern: "*PBcoverage.txt"
 
 	input:
 	tuple val(name), path(bam)
@@ -119,14 +120,16 @@ process MULTIQC {
 	Rscript --vanilla ${params.coverstat} ${launchDir}/coverage $run
 	Rscript --vanilla ${params.covcompare} $run ${params.seqstats}
 	cat PerExon.html | perl  -pe 's/[^[:ascii:]]//g;' > PerExon_mqc.html
-	multiqc . -n report.html
+	echo "log_filesize_limit: 30000000" > multiqc_config.yaml
+	multiqc . -n report_coverage.html
+	cp report_coverage.html ${params.datain}
 	"""
 
 }
 
 
 workflow {
- rawfastq =	channel.fromFilePairs("${params.datain}/*R{1,2}*", checkIfExists: true)
+ rawfastq =	channel.fromFilePairs("${params.datain}/raw_fastq/*R{1,2}*", checkIfExists: true)
  fastqced =	FASTQC(rawfastq)
  bam =		ALIGN_CPU(rawfastq)
  sortedbam =	SORT_INDEX(bam)
