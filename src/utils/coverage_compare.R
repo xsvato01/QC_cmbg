@@ -31,4 +31,6 @@ ft = formattable(final, list(
   Coverage_min = color_tile("red", "lightpink")
 ))
 
-htmlwidgets::saveWidget(as.htmlwidget(ft), file="PerExon.html", title = "Statistika exonů")
+htmlwidgets::saveWidget(as.datatable(ft), file="PerExon.html", title = "Statistika exonů")
+
+#htmlwidgets::saveWidget(as.htmlwidget(ft), file="PerExon.html", title = "Statistika exonů")
