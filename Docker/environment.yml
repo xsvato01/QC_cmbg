@@ -17,6 +17,7 @@ dependencies:
   - qualimap
   - multiqc
   - r-data.table=1.13.6
+  - r-dt
   - r-formattable
   - r-htmlwidgets
   - r-dplyr

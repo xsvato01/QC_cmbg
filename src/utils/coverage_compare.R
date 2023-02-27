@@ -1,6 +1,7 @@
 library(data.table)
 library(formattable)
 library(dplyr)
+library(DT)
 
 print(list.files(pattern = "*_AteroHemo_gene_coverage.txt"))
 args = commandArgs(trailingOnly=TRUE)
@@ -15,8 +16,10 @@ exon_start = stringr::str_split(table$Exon, "_")
 
 
 final = table %>% arrange(Sample, Exon) %>%
-  mutate(zscore_mad = round(((Coverage_median-SeqStats$median_median)/SeqStats$mad), digits = 2)) %>%
-  filter(zscore_mad < -1.5) %>%
+ # mutate(zscore_mad = round(((Coverage_median-SeqStats$median_median)/SeqStats$mad), digits = 2)) %>%
+#  filter(zscore_mad < -1.5) %>%
+  filter(Coverage_min < 30) %>%
+  arrange(Coverage_min) %>%
   mutate(Start = sapply(stringr::str_split(Exon, "_"), "[", 2)) %>%
   mutate(Exon = sapply(stringr::str_split(Exon, "_"), "[", 1) )%>%
   relocate(Chrom, .before = Exon) %>%
@@ -25,7 +28,7 @@ final = table %>% arrange(Sample, Exon) %>%
 
 ft = formattable(final, list(
   Coverage_mean = FALSE,
-  zscore_mad = color_tile("red", "lightpink")
+  Coverage_min = color_tile("red", "lightpink")
 ))
 
 htmlwidgets::saveWidget(as.htmlwidget(ft), file="PerExon.html", title = "Statistika exonů")
