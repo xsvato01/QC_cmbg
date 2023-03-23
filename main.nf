@@ -8,7 +8,7 @@ process FASTQC {
 	//publishDir  "${launchDir}/fastQC", mode:'copy'
 
 	input:
-	tuple val(name), path(reads)
+	tuple val(type), val(name), path(reads)
 
 	output:
 	path '*'
@@ -23,13 +23,13 @@ process FASTQC {
 
 process ALIGN_CPU {
 	tag "CPU align on $name using $task.cpus CPUs and $task.memory memory"
-	publishDir "${launchDir}/mapped/", mode:'copy'
+	// publishDir "${launchDir}/mapped/", mode:'copy'
 
 	input:
-	tuple val(name), path(reads)
+	tuple val(type), val(name), path(reads)
 
 	output:
-	tuple val(name), path("${name}.bam")
+	tuple val(type), val(name), path("${name}.bam")
 
 	script:
 	rg = "\"@RG\\tID:${name}\\tSM:${name}\\tLB:${name}\\tPL:ILLUMINA\""
@@ -69,11 +69,11 @@ process SORT_INDEX {
   publishDir "${launchDir}/mapped/", mode:'copy'
 
 	input:
-	tuple val(name), path(bam)
+	tuple val(type), val(name), path(bam)
 
 	output:
-	tuple val(name), path("${name}.sorted.bam")
-	tuple val(name), path("${name}.sorted.bai")
+	tuple val(type), val(name), path("${name}.sorted.bam")
+	tuple val(type), val(name), path("${name}.sorted.bai")
 
 	script:
 	"""
@@ -87,14 +87,15 @@ process COVERAGE_STATS {
 	publishDir "${launchDir}/coverage/", mode:'copy', pattern: "*PBcoverage.txt"
 
 	input:
-	tuple val(name), path(bam)
+	tuple val(type), val(name), path(bam), val(specific_bed)
+	//val ('specific_bed')
 
 	output:
 	path "*"
 	
 	script:
 	"""
-	bedtools coverage -abam ${params.covbed} -b $bam -d > ${name}.PBcoverage.txt
+	bedtools coverage -abam ${specific_bed} -b $bam -d > ${name}.PBcoverage.txt
 	qualimap bamqc -bam $bam -gff ${params.covbed} -outdir ${name} -outfile ${name}.qualimap -outformat HTML
 	samtools flagstat $bam > ${name}.flagstat
 	samtools stats $bam > ${name}.samstats
@@ -129,12 +130,55 @@ process MULTIQC {
 
 
 workflow {
- rawfastq =	channel.fromFilePairs("${params.datain}/raw_fastq/*R{1,2}*", checkIfExists: true)
- fastqced =	FASTQC(rawfastq)
- bam =		ALIGN_CPU(rawfastq)
+ //Atero =	channel.fromFilePairs("${params.datain}/raw_fastq/a*R{1,2}*")
+
+
+	Atero = Channel
+    .fromFilePairs("${params.datain}/raw_fastq/a*R{1,2}*" )
+    .map { 
+        it -> [ "Atero", it[0], it[1]]
+    }
+
+ 	Hemato =	Channel
+    .fromFilePairs("${params.datain}/raw_fastq/h*R{1,2}*" )
+    .map { 
+        it -> [ "Hemato", it[0], it[1]]
+    }
+
+print("CONCAT")
+ 	Concat = Atero.mix(Hemato)
+		Concat.view()
+
+ fastqced =	FASTQC(Concat)
+  bam =		ALIGN_CPU(Concat)
  sortedbam =	SORT_INDEX(bam)
- stats =	COVERAGE_STATS(sortedbam[0])
-//stats[0].collect().view()
+	sortedbam[0].view()
+
+	sortedbam[0].branch {
+        Atero: it[0] == "Atero"
+									return [it[0], it[1], it[2], params.Atero23_re]
+        Hemato: it[0] == "Hemato"
+									return [it[0], it[1], it[2],  params.Hemato23_re]
+    }
+    .set{sorted}
+
+		// sortedbam[0].map({
+  //       if it[0] == "Atero"
+		// 							return [it, params.Atero23_re]
+  //       if it[0] == "Hemato"
+		// 							return [it, params.Hemato23_re]
+  //   }).view()
+
+
+	// sorted.Atero.view { "$it is Atero" }
+ // sorted.Hemato.view { "$it is Hemato" }
+
+	 sorted = sorted.Atero.mix(sorted.Hemato).view{"$it is merged"}
+
+  stats =	COVERAGE_STATS(sorted)
+
+  // stats =	COVERAGE_STATS(sortedbam[0])
+// //stats[0].collect().view()
 
   MULTIQC(stats[0].mix(fastqced).collect())
 }
