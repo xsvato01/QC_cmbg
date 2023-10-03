@@ -130,27 +130,24 @@ process MULTIQC {
 
 
 workflow {
- //Atero =	channel.fromFilePairs("${params.datain}/raw_fastq/a*R{1,2}*")
-
-
 	Atero = Channel
     .fromFilePairs("${params.datain}/raw_fastq/a*R{1,2}*" )
-    .map { 
-        it -> [ "Atero", it[0], it[1]]
-    }
-
+    .map {it -> [ "Atero", it[0], it[1]]}
  	Hemato =	Channel
     .fromFilePairs("${params.datain}/raw_fastq/h*R{1,2}*" )
-    .map { 
-        it -> [ "Hemato", it[0], it[1]]
-    }
+    .map {it -> [ "Hemato", it[0], it[1]]}
+		Fialka =	Channel
+    .fromFilePairs("${params.datain}/raw_fastq/f*R{1,2}*" )
+    .map {it -> [ "Fialka", it[0], it[1]]}
+		Pank =	Channel
+    .fromFilePairs("${params.datain}/raw_fastq/p*R{1,2}*" )
+    .map {it -> [ "Pank", it[0], it[1]]}
 
-print("CONCAT")
- 	Concat = Atero.mix(Hemato)
+ 	Concat = Atero.mix(Hemato,Pank,Fialka)
 		Concat.view()
 
  fastqced =	FASTQC(Concat)
-  bam =		ALIGN_CPU(Concat)
+ bam =		ALIGN_CPU(Concat)
  sortedbam =	SORT_INDEX(bam)
 	sortedbam[0].view()
 
@@ -159,6 +156,10 @@ print("CONCAT")
 									return [it[0], it[1], it[2], params.Atero23_re]
         Hemato: it[0] == "Hemato"
 									return [it[0], it[1], it[2],  params.Hemato23_re]
+							Pank: it[0] == "Pank"
+									return [it[0], it[1], it[2],  params.Pank23]
+							Fialka: it[0] == "Fialka"
+									return [it[0], it[1], it[2],  params.Fialka23]
     }
     .set{sorted}
 
@@ -169,16 +170,12 @@ print("CONCAT")
 		// 							return [it, params.Hemato23_re]
   //   }).view()
 
-
-	// sorted.Atero.view { "$it is Atero" }
- // sorted.Hemato.view { "$it is Hemato" }
-
-	 sorted = sorted.Atero.mix(sorted.Hemato).view{"$it is merged"}
-
+	 sorted.Atero.view { "$it is Atero" }
+  sorted.Hemato.view {"$it is Hemato"}
+		sorted.Pank.view {"$it is Pank"}
+		sorted.Fialka.view {"$it is Fialka"}
+	 sorted = sorted.Atero.mix(sorted.Hemato,sorted.Pank,sorted.Fialka)
+										//.view{"$it is merged"}
   stats =	COVERAGE_STATS(sorted)
-
-  // stats =	COVERAGE_STATS(sortedbam[0])
-// //stats[0].collect().view()
-
   MULTIQC(stats[0].mix(fastqced).collect())
 }
